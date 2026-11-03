@@ -58,6 +58,18 @@ describe("WebcrawlClient", () => {
     assert.throws(() => new WebcrawlClient({ fetch: f }).parse({}), (e: unknown) => e instanceof WebcrawlError && e.kind === "bad_request");
   });
 
+  it("preserves explicit crawl cache preferences and omits an unset preference", async () => {
+    for (const noCache of [true, false, undefined]) {
+      const { f, calls } = fakeFetch(200, {});
+      await new WebcrawlClient({ fetch: f }).crawl({ url: "https://example.com/docs", noCache });
+      assert.equal(calls[0].url.endsWith("/v1/crawl"), true);
+      assert.deepEqual(JSON.parse(String(calls[0].init.body)), {
+        url: "https://example.com/docs",
+        ...(noCache === undefined ? {} : { noCache }),
+      });
+    }
+  });
+
   it("caps crawl maxPages at 25", async () => {
     const { f, calls } = fakeFetch(200, {});
     await new WebcrawlClient({ fetch: f }).crawl({ url: "https://a.com", maxPages: 500 });

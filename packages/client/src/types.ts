@@ -106,6 +106,8 @@ export interface CrawlParams {
   url: string;
   maxPages?: number;
   extractStructured?: boolean;
+  /** Skip cached content for every crawled page. */
+  noCache?: boolean;
 }
 
 export interface ExtractParams {

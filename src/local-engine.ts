@@ -39,7 +39,7 @@ export interface LocalEngineBackend {
   parse(p: Record<string, unknown>): Promise<Record<string, unknown>>;
   run(id: string): Promise<Record<string, unknown>>;
   map(p: { url: string; limit?: number; search?: string }): Promise<Record<string, unknown>>;
-  crawl(p: { url: string; maxPages?: number; extractStructured?: boolean }): Promise<Record<string, unknown>>;
+  crawl(p: { url: string; maxPages?: number; extractStructured?: boolean; noCache?: boolean }): Promise<Record<string, unknown>>;
   extract(p: { url: string; prompt?: string; schema?: Record<string, unknown> }): Promise<Record<string, unknown>>;
   rerank(p: { query: string; documents: Array<string | Record<string, unknown>>; topK?: number }): Promise<Record<string, unknown>>;
   categories(): Promise<Record<string, unknown>>;
@@ -444,7 +444,7 @@ export function createLocalEngineClient(): LocalEngineBackend {
       };
     },
 
-    async crawl(p: { url: string; maxPages?: number }): Promise<Record<string, unknown>> {
+    async crawl(p: { url: string; maxPages?: number; noCache?: boolean }): Promise<Record<string, unknown>> {
       const targetUrl = /^https?:\/\//i.test(p.url) ? p.url : `https://${p.url}`;
       const maxPages = Math.min(25, Math.max(1, p.maxPages ?? 5));
       const mapped = await mapWebsiteUrls(targetUrl, { limit: maxPages * 3 });
@@ -453,7 +453,7 @@ export function createLocalEngineClient(): LocalEngineBackend {
       const pages: Array<Record<string, unknown>> = [];
       for (const u of urls) {
         try {
-          const scraped = await this.scrape({ url: u });
+          const scraped = await this.scrape({ url: u, noCache: p.noCache });
           pages.push({
             url: scraped.url ?? u,
             title: scraped.title ?? u,

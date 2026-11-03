@@ -25,7 +25,7 @@ const CASES = [
   { kind: "news", cmd: ["scrape", "https://news.ycombinator.com"] },
   // map prints one URL per line, so a short-but-correct answer is a few hundred chars.
   { kind: "map", cmd: ["map", "https://react.dev", "-n", "20"], minChars: 60 },
-  // `crawl` is left out: it has no --no-cache flag, so repeat runs would measure the cache.
+  { kind: "crawl", cmd: ["crawl", "https://react.dev/learn", "-n", "5"] },
   { kind: "search", cmd: ["search", "postgres jsonb index performance", "-n", "5"] },
   { kind: "search", cmd: ["search", "next.js app router vs pages router differences", "-n", "5"] },
   { kind: "cve", cmd: ["search", "CVE-2024-3094 xz utils", "-c", "security", "--sub", "cve", "-n", "2"] },
@@ -39,8 +39,8 @@ for (const c of CASES) {
   let ok = 0;
   let chars = 0;
   for (let i = 0; i < RUNS; i++) {
-    // --no-cache on scrape so repeat runs measure the network, not the local LRU.
-    const extra = c.cmd[0] === "scrape" ? ["--no-cache"] : [];
+    // Bypass page-content caches for scrape and crawl on every benchmark run.
+    const extra = ["scrape", "crawl"].includes(c.cmd[0]) ? ["--no-cache"] : [];
     const t0 = performance.now();
     try {
       const { stdout } = await run("node", [BIN, ...c.cmd, ...extra, "--mode", "local"], {

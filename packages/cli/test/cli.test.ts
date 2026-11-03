@@ -45,6 +45,25 @@ describe("webcrawl CLI", () => {
     assert.equal(t.out(), "# Hello\n");
   });
 
+  it("crawl forwards --no-cache and keeps default requests unchanged", async () => {
+    for (const noCache of [false, true]) {
+      const t = setup(() => ({ json: { pages: [] } }));
+      assert.equal(await t.run(["crawl", "https://example.com/docs", "-n", "3", ...(noCache ? ["--no-cache"] : [])]), 0);
+      assert.match(t.calls[0].url, /\/v1\/crawl$/);
+      assert.deepEqual(t.calls[0].body, {
+        url: "https://example.com/docs",
+        maxPages: 3,
+        ...(noCache ? { noCache: true } : {}),
+      });
+    }
+  });
+
+  it("help lists --no-cache for scrape and crawl", async () => {
+    const t = setup();
+    assert.equal(await t.run(["--help"]), 0);
+    assert.match(t.out(), /--no-cache[^\n]*scrape[^\n]*crawl/);
+  });
+
   it("usage errors exit 2 without calling the API", async () => {
     const t = setup();
     assert.equal(await t.run(["search"]), 2);
